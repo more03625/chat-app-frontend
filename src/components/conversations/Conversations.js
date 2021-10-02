@@ -1,6 +1,15 @@
+import React, { useState } from 'react'
 import './conversations.css'
 export default function Conversations({ conversations }) {
-    console.log("c ===>", conversations)
+    const [user, setUser] = useState(null);
+
+    // const getUser = async () => {
+    //     var url = 
+    // }
+    // useEffect(() => {
+    //     getUser
+
+    // }, [])
     return (
         <>
             <div className="conversation">

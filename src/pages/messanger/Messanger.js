@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import Topbar from '../../components/topbar/Topbar';
 import './messanger.css';
 import Conversations from '../../components/conversations/Conversations';
@@ -12,23 +12,31 @@ export default function Messanger() {
     // var userData = {
     //     "title": "Logged in successfully",
     //     "error": false,
-    //     "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6Im5ld3NkYi1hZG1pbkBnbWFpbC5jb20iLCJ1c2VyX2lkIjoiNjE0YzE1ZGUwMzEwOTYzMjgwMGQ5ZjIzIiwicm9sZSI6MCwiZXhwIjoxODQ5MTA5OTMzLCJpYXQiOjE2MzMxMDk5MzN9.Qylcl5qmkoo7TqxLkcYAqQnQPivSvYBvAuXFQbgR6UA",
+    //     "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InJhaHVsQGdtYWlsLmNvbSIsInVzZXJfaWQiOiI2MTU3ZDQ0YTQ0ZWE3ZTNiYThhMGExMTIiLCJyb2xlIjowLCJleHAiOjE4NDkxNDcyMzEsImlhdCI6MTYzMzE0NzIzMX0.QWl6JaxbhrSW_2eQNg4HXvS6J5AUbcBvQRxuexjgVyI",
     //     "data": {
     //         "role": 0,
     //         "history": [],
-    //         "_id": "614c15de03109632800d9f23",
+    //         "_id": "6157d44a44ea7e3ba8a0a112",
     //         "name": "rahul",
-    //         "email": "newsdb-admin@gmail.com",
-    //         "username": "newsdb-admin",
+    //         "email": "rahul@gmail.com",
+    //         "username": "rahulmore",
     //         "status": "active",
-    //         "createdAt": "2021-09-23T05:51:26.782Z",
-    //         "updatedAt": "2021-09-23T05:51:26.782Z",
+    //         "createdAt": "2021-10-02T03:38:50.655Z",
+    //         "updatedAt": "2021-10-02T03:38:50.655Z",
     //         "__v": 0
-    //     },
+    //     }
     // }
     // localStorage.setItem('chat-app-token', JSON.stringify(userData)); // convert JSON to string
+    const [loader, setLoader] = useState(false);
     const [conversations, setConversations] = useState([]);
+    const [currentChat, setCurrentChat] = useState(null);
+    const [messages, setMessages] = useState(null);
+    const [newMessages, setNewMessages] = useState('');
+    const [error, setError] = useState([]);
+    const scrollRef = useRef();
+
     const getConversations = async () => {
+        setLoader(true);
         try {
             var url = Host + Endpoints.conversations + "/" + getUserInfo().data._id
             const result = await axios.get(url);
@@ -36,11 +44,61 @@ export default function Messanger() {
         } catch (err) {
             console.log("err ===> " + err)
         }
+        setLoader(false);
+    }
+    const getMessages = async () => {
+        setLoader(true);
+        try {
+            var url = Host + Endpoints.messages + "/" + currentChat?._id
+            const result = await axios.get(url);
+            if (result.data.error === true) {
+                console.log(result.data.title)
+            } else {
+                setMessages(result.data.data);
+            }
+        } catch (err) {
+            console.log(err);
+        }
+        setLoader(false);
+    }
+    const isValid = () => {
+        if (newMessages === null || newMessages === '') {
+            setError({ message: 'Please enter a message' });
+            return false;
+        } else {
+            return true;
+        }
+    }
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        if (isValid()) {
+            setError({});
+            var message = {
+                sender: getUserInfo().data._id,
+                text: newMessages,
+                conversationId: currentChat._id
+            }
+            try {
+                var url = Host + Endpoints.messages
+                const result = await axios.post(url, message);
+                setMessages([...messages, result.data.data]);
+                setNewMessages('');
+                console.log("addMessage ===> ", result)
+            } catch (err) {
+                console.log('There is an error!');
+            }
+        }
 
     }
     useEffect(() => {
+        scrollRef.current?.scrollIntoView({ behavior: "smooth" })
+    }, [messages]);
+    useEffect(() => {
+        getMessages();
+    }, [currentChat]);
+    useEffect(() => {
         getConversations();
-    }, [])
+    }, []);
     return (
         <>
             <Topbar />
@@ -50,30 +108,40 @@ export default function Messanger() {
                         <input placeholder="Search for freinds..." className="chatMenuInput" />
                         {
                             conversations.map((c) => (
-                                <Conversations conversations={c} />
+                                <div onClick={() => setCurrentChat(c)}>
+                                    <Conversations conversations={c} />
+                                </div>
                             ))
                         }
                     </div>
                 </div>
                 <div className="chatBox">
                     <div className="chatBoxWrapper">
-                        <div className="chatBoxTop">
-                            <Messages />
-                            <Messages />
-                            <Messages own={true} />
-                            <Messages />
-                            <Messages />
-                            <Messages />
-                            <Messages />
-                            <Messages own={true} />
-                            <Messages />
-                            <Messages own={true} />
-                            <Messages />
-                        </div>
-                        <div className="chatBoxBottom">
-                            <textarea placeholder="Write what's on your mind?" className="chatMessageInput"></textarea>
-                            <button className="chatSubmitButton">Send</button>
-                        </div>
+                        {
+                            currentChat ? (
+                                <>
+                                    <div className="chatBoxTop">
+                                        {
+                                            messages.length > 0 ? (
+                                                messages.map(m => (
+                                                    <div ref={scrollRef}>
+                                                        <Messages message={m} own={m.sender === getUserInfo().data._id} />
+                                                    </div>
+                                                ))
+                                            ) : (
+                                                <span className="initConversation">Start Chatting!</span>
+                                            )
+                                        }
+                                    </div>
+                                    <div className="chatBoxBottom">
+                                        <input type="text" name="chat" placeholder="Write what's on your mind?" className="chatMessageInput" defaultValue={newMessages} onChange={(e) => setNewMessages(e.target.value)} />
+                                        <button className="chatSubmitButton" onClick={handleSubmit}>Send</button>
+                                    </div>
+                                    <span className="text-danger">{error.message}</span>
+                                </>
+                            ) : (
+                                <span className="noConversationText">Choose conversation to start messaging!</span>
+                            )}
                     </div>
                 </div>
                 <div className="chatOnline">
