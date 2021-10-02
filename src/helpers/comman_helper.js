@@ -6,3 +6,4 @@ export const Endpoints = {
 export const getUserInfo = () => {
     return JSON.parse(localStorage.getItem('chat-app-token'))
 }
+export const SocketURL = "ws://localhost:8900";

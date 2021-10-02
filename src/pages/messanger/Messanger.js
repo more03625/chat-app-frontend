@@ -4,8 +4,9 @@ import './messanger.css';
 import Conversations from '../../components/conversations/Conversations';
 import Messages from '../../components/messages/Messages';
 import ChatOnline from '../../components/chatonline/Chatonline';
-import { Endpoints, getUserInfo, Host } from '../../helpers/comman_helper';
+import { Endpoints, getUserInfo, Host, SocketURL } from '../../helpers/comman_helper';
 import axios from 'axios';
+import { io } from 'socket.io-client'
 export default function Messanger() {
 
 
@@ -26,14 +27,36 @@ export default function Messanger() {
     //         "__v": 0
     //     }
     // }
+
+    // var userData = {
+
+    //     "title": "Logged in successfully",
+    //     "error": false,
+    //     "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InlvZ2VzaEBnbWFpbC5jb20iLCJ1c2VyX2lkIjoiNjE1N2Q0Njk0NGVhN2UzYmE4YTBhMTE2Iiwicm9sZSI6MCwiZXhwIjoxODQ5MTc3OTUwLCJpYXQiOjE2MzMxNzc5NTB9.W3eB1wIYBP5n4C06fHFG7IrN7u0FnwxOe-lPzbnuhn8",
+    //     "data": {
+    //         "role": 0,
+    //         "history": [],
+    //         "_id": "6157d46944ea7e3ba8a0a116",
+    //         "name": "yogesh",
+    //         "email": "yogesh@gmail.com",
+    //         "username": "yogeshmore",
+    //         "status": "active",
+    //         "createdAt": "2021-10-02T03:39:21.644Z",
+    //         "updatedAt": "2021-10-02T03:39:21.644Z",
+    //         "__v": 0
+    //     }
+    // }
     // localStorage.setItem('chat-app-token', JSON.stringify(userData)); // convert JSON to string
     const [loader, setLoader] = useState(false);
     const [conversations, setConversations] = useState([]);
     const [currentChat, setCurrentChat] = useState(null);
     const [messages, setMessages] = useState(null);
     const [newMessages, setNewMessages] = useState('');
+    const [arrivalMessage, setArrivalMessage] = useState(null);
     const [error, setError] = useState([]);
     const scrollRef = useRef();
+    const socket = useRef();
+
 
     const getConversations = async () => {
         setLoader(true);
@@ -78,12 +101,19 @@ export default function Messanger() {
                 text: newMessages,
                 conversationId: currentChat._id
             }
+            const recevierId = currentChat.members.find(member => member !== getUserInfo().data._id);
+
+            socket.current.emit("sendMessage", {
+                senderId: getUserInfo().data._id,
+                recevierId,
+                text: newMessages
+            });
+
             try {
                 var url = Host + Endpoints.messages
                 const result = await axios.post(url, message);
                 setMessages([...messages, result.data.data]);
                 setNewMessages('');
-                console.log("addMessage ===> ", result)
             } catch (err) {
                 console.log('There is an error!');
             }
@@ -91,11 +121,31 @@ export default function Messanger() {
 
     }
     useEffect(() => {
+        socket.current?.emit("addUser", getUserInfo().data);
+        socket.current?.on("getUsers", users => {
+            console.log("users ===> ", users);
+        });
+    }, [getUserInfo().data]);
+
+    useEffect(() => {
         scrollRef.current?.scrollIntoView({ behavior: "smooth" })
     }, [messages]);
     useEffect(() => {
         getMessages();
     }, [currentChat]);
+    useEffect(() => {
+        socket.current = io(SocketURL);
+        socket.current.on("getMessage", data => {
+            setArrivalMessage({
+                sender: data.senderId,
+                text: data.text,
+                createdAt: data.createdAt
+            });
+        })
+    }, []);
+    useEffect(() => {
+        arrivalMessage && currentChat?.members.includes(arrivalMessage.sender) && setMessages((prev) => [...prev, arrivalMessage]);
+    }, [arrivalMessage, currentChat])
     useEffect(() => {
         getConversations();
     }, []);
