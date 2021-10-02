@@ -1,0 +1,29 @@
+.chatOnlineFriend {
+  display: flex;
+  align-items: center;
+  font-weight: 500;
+  cursor: pointer;
+  margin-top: 10px;
+}
+.chatOnlineFriend:hover {
+  background-color: rgb(240, 240, 240);
+}
+/* If child div = position:absolute then parent will be position:relative */
+.chatOnlineImageContainer {
+  position: relative;
+}
+.chatOnlineBadge {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: limegreen;
+  top: 2%;
+  right: 2px;
+}
+.chatOnlineImage {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}
