@@ -1,8 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Host, Endpoints } from '../../helpers/comman_helper';
+import React from 'react';
 import './messages.css'
-import { getUserInfo } from '../../helpers/comman_helper';
-import axios from 'axios';
 export default function Messages({ message, own }) {
 
     return (
