@@ -9,44 +9,6 @@ import axios from 'axios';
 import { io } from 'socket.io-client'
 export default function Messanger() {
 
-
-    // var userData = {
-    //     "title": "Logged in successfully",
-    //     "error": false,
-    //     "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InJhaHVsQGdtYWlsLmNvbSIsInVzZXJfaWQiOiI2MTU3ZDQ0YTQ0ZWE3ZTNiYThhMGExMTIiLCJyb2xlIjowLCJleHAiOjE4NDkxNDcyMzEsImlhdCI6MTYzMzE0NzIzMX0.QWl6JaxbhrSW_2eQNg4HXvS6J5AUbcBvQRxuexjgVyI",
-    //     "data": {
-    //         "role": 0,
-    //         "history": [],
-    //         "_id": "6157d44a44ea7e3ba8a0a112",
-    //         "name": "rahul",
-    //         "email": "rahul@gmail.com",
-    //         "username": "rahulmore",
-    //         "status": "active",
-    //         "createdAt": "2021-10-02T03:38:50.655Z",
-    //         "updatedAt": "2021-10-02T03:38:50.655Z",
-    //         "__v": 0
-    //     }
-    // }
-
-    // var userData = {
-
-    //     "title": "Logged in successfully",
-    //     "error": false,
-    //     "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InlvZ2VzaEBnbWFpbC5jb20iLCJ1c2VyX2lkIjoiNjE1N2Q0Njk0NGVhN2UzYmE4YTBhMTE2Iiwicm9sZSI6MCwiZXhwIjoxODQ5MTc3OTUwLCJpYXQiOjE2MzMxNzc5NTB9.W3eB1wIYBP5n4C06fHFG7IrN7u0FnwxOe-lPzbnuhn8",
-    //     "data": {
-    //         "role": 0,
-    //         "history": [],
-    //         "_id": "6157d46944ea7e3ba8a0a116",
-    //         "name": "yogesh",
-    //         "email": "yogesh@gmail.com",
-    //         "username": "yogeshmore",
-    //         "status": "active",
-    //         "createdAt": "2021-10-02T03:39:21.644Z",
-    //         "updatedAt": "2021-10-02T03:39:21.644Z",
-    //         "__v": 0
-    //     }
-    // }
-    // localStorage.setItem('chat-app-token', JSON.stringify(userData)); // convert JSON to string
     const [loader, setLoader] = useState(false);
     const [conversations, setConversations] = useState([]);
     const [currentChat, setCurrentChat] = useState(null);
@@ -57,13 +19,29 @@ export default function Messanger() {
     const scrollRef = useRef();
     const socket = useRef();
 
+    useEffect(() => {
+        socket.current = io(SocketURL);
+        socket.current.on("getMessage", data => {
+            setArrivalMessage({
+                sender: data.senderId,
+                text: data.text,
+                createdAt: Date.now()
+            });
+        })
+    }, []);
+    useEffect(() => {
+        arrivalMessage &&
+            currentChat?.members.includes(arrivalMessage.sender) &&
+            setMessages((prev) => [...prev, arrivalMessage]);
+    }, [arrivalMessage, currentChat]);
 
-    const getConversations = async () => {
+
+    const getConversations = async () => { // get all conversation of current User LEFT SIDE
         setLoader(true);
         try {
             var url = Host + Endpoints.conversations + "/" + getUserInfo().data._id
             const result = await axios.get(url);
-            setConversations(result.data.data)
+            setConversations(result.data.data);
         } catch (err) {
             console.log("err ===> " + err)
         }
@@ -74,11 +52,7 @@ export default function Messanger() {
         try {
             var url = Host + Endpoints.messages + "/" + currentChat?._id
             const result = await axios.get(url);
-            if (result.data.error === true) {
-                console.log(result.data.title)
-            } else {
-                setMessages(result.data.data);
-            }
+            setMessages(result.data.data);
         } catch (err) {
             console.log(err);
         }
@@ -101,11 +75,12 @@ export default function Messanger() {
                 text: newMessages,
                 conversationId: currentChat._id
             }
-            const recevierId = currentChat.members.find(member => member !== getUserInfo().data._id);
+
+            const receiverId = currentChat.members !== undefined ? currentChat.members.find(member => member !== getUserInfo().data._id) : currentChat._id
 
             socket.current.emit("sendMessage", {
                 senderId: getUserInfo().data._id,
-                recevierId,
+                receiverId,
                 text: newMessages
             });
 
@@ -118,12 +93,11 @@ export default function Messanger() {
                 console.log('There is an error!');
             }
         }
-
     }
     useEffect(() => {
-        socket.current?.emit("addUser", getUserInfo().data);
-        socket.current?.on("getUsers", users => {
-            console.log("users ===> ", users);
+        socket.current.emit("addUser", getUserInfo().data._id);
+        socket.current.on("getUsers", (users) => {
+            // console.log("users ===> ", users);
         });
     }, [getUserInfo().data]);
 
@@ -131,24 +105,12 @@ export default function Messanger() {
         scrollRef.current?.scrollIntoView({ behavior: "smooth" })
     }, [messages]);
     useEffect(() => {
-        getMessages();
+        currentChat?._id && getMessages()
     }, [currentChat]);
-    useEffect(() => {
-        socket.current = io(SocketURL);
-        socket.current.on("getMessage", data => {
-            setArrivalMessage({
-                sender: data.senderId,
-                text: data.text,
-                createdAt: data.createdAt
-            });
-        })
-    }, []);
-    useEffect(() => {
-        arrivalMessage && currentChat?.members.includes(arrivalMessage.sender) && setMessages((prev) => [...prev, arrivalMessage]);
-    }, [arrivalMessage, currentChat])
+
     useEffect(() => {
         getConversations();
-    }, []);
+    }, [getUserInfo().data._id]);
     return (
         <>
             <Topbar />
@@ -156,9 +118,10 @@ export default function Messanger() {
                 <div className="chatMenu">
                     <div className="chatMenuWrapper">
                         <input placeholder="Search for freinds..." className="chatMenuInput" />
+                        {/*Conversation of current user!*/}
                         {
-                            conversations.map((c) => (
-                                <div onClick={() => setCurrentChat(c)}>
+                            conversations.map((c, i) => (
+                                <div key={i} onClick={() => setCurrentChat(c)}>
                                     <Conversations conversations={c} />
                                 </div>
                             ))
@@ -172,9 +135,9 @@ export default function Messanger() {
                                 <>
                                     <div className="chatBoxTop">
                                         {
-                                            messages.length > 0 ? (
-                                                messages.map(m => (
-                                                    <div ref={scrollRef}>
+                                            messages?.length > 0 ? (
+                                                messages.map((m, i) => (
+                                                    <div key={i} ref={scrollRef}>
                                                         <Messages message={m} own={m.sender === getUserInfo().data._id} />
                                                     </div>
                                                 ))
@@ -195,13 +158,11 @@ export default function Messanger() {
                     </div>
                 </div>
                 <div className="chatOnline">
-                    <div className="chatOnlineWrapper">
-                        <ChatOnline />
-                        <ChatOnline />
-                        <ChatOnline />
-                        <ChatOnline />
-                        <ChatOnline />
+                    {/*
+                        <div className="chatOnlineWrapper">
+                        <ChatOnline setCurrentChat={setCurrentChat} currentChat={currentChat} />
                     </div>
+                    */}
                 </div>
             </div>
         </>

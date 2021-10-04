@@ -1,10 +1,12 @@
 import "./topbar.css";
 import { Link } from "react-router-dom";
-import { Search, Person, Chat, Notifications } from "@material-ui/icons";
+import { getUserInfo, logout } from "../../helpers/comman_helper";
+import toast, { Toaster } from 'react-hot-toast';
 
 export default function Topbar() {
     return (
         <div className="topbarContainer">
+            <Toaster />
             <div className="topbarLeft">
                 <Link to="/" style={{ textDecoration: "none" }}>
                     <span className="logo">Chat Now</span>
@@ -37,6 +39,8 @@ export default function Topbar() {
                         className="topbarImg"
                     />
                 </Link>
+                <span className="topbarIconItem">{getUserInfo().data.name}</span>
+                <span className="topbarIconItem" onClick={logout}>Logout</span>
             </div>
         </div >
     );

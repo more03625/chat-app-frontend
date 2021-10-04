@@ -1,20 +1,30 @@
-import React, { useState } from 'react'
+import axios from 'axios';
+import React, { useState, useEffect } from 'react'
+import { Endpoints, getUserInfo, Host } from '../../helpers/comman_helper';
 import './conversations.css'
+
 export default function Conversations({ conversations }) {
+
     const [user, setUser] = useState(null);
+    var friendID = conversations.members.find((m) => m !== getUserInfo().data._id);
+    const getUser = async () => {
+        var url = Host + Endpoints.getUser
+        var data = {
+            userId: friendID
+        }
+        const result = await axios.post(url, data);
+        setUser(result.data.data)
+    }
+    useEffect(() => {
+        getUser();
+    }, [getUserInfo().data._id, conversations])
 
-    // const getUser = async () => {
-    //     var url = 
-    // }
-    // useEffect(() => {
-    //     getUser
 
-    // }, [])
     return (
         <>
             <div className="conversation">
-                <img src="https://avatars.githubusercontent.com/u/25549118?v=4" alt="Rahul More" className="conversationImage" />
-                <span className="conversationName">Rahul More</span>
+                <img src={user?.profile} alt={user?.name} className="conversationImage" />
+                <span className="conversationName">{user?.name}</span>
             </div>
         </>
     )
