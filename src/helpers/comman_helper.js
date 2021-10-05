@@ -11,7 +11,7 @@ export const Endpoints = {
 export const getUserInfo = () => {
     return JSON.parse(localStorage.getItem(process.env.REACT_APP_AUTH_TOKEN_NAME))
 }
-export const SocketURL = window.location.host === "localhost:3000" ? "ws://localhost:8900" : "https://chat-now-socket.herokuapp.com:8900"
+export const SocketURL = window.location.host === "localhost:3000" ? "ws://localhost:8900" : "ws://chat-now-socket.herokuapp.com"
 
 export const logout = () => {
     toast.success("Logged out successfully!");

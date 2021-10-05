@@ -74,3 +74,14 @@
   margin-bottom: 5px;
   color: red;
 }
+.row {
+  display: flex;
+}
+.m-2 {
+  margin-top: 5px;
+}
+.ml-auto {
+  text-align: right;
+  justify-content: right;
+  align-items: flex-end;
+}

@@ -147,7 +147,7 @@ export default function Messanger() {
                                         }
                                     </div>
                                     <div className="chatBoxBottom">
-                                        <input type="text" name="chat" placeholder="Write what's on your mind?" className="chatMessageInput" defaultValue={newMessages} onChange={(e) => setNewMessages(e.target.value)} />
+                                        <input type="text" name="chat" placeholder="Write what's on your mind?" className="chatMessageInput" value={newMessages} onChange={(e) => setNewMessages(e.target.value)} />
                                         <button className="chatSubmitButton" onClick={handleSubmit}>Send</button>
                                     </div>
                                     <span className="text-danger">{error.message}</span>

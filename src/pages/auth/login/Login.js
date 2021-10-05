@@ -54,12 +54,12 @@ export default function Login() {
         }
         setLoading({ signIn: false });
     }
-    const fillcreds = (userType) => {
+    const fillcreds = (userName) => {
         setSignInData(null);
-        if (userType === 'admin') {
-            setSignInData({ ...signInData, email: 'rahulmore@gmail.com', password: '123456789' });
-        } else if (userType === 'normal') {
-            setSignInData({ ...signInData, email: 'yogeshmore@gmail.com', password: '123456789' });
+        if (userName === 'rahul') {
+            setSignInData({ ...signInData, email: 'rahul@gmail.com', password: 'rahul@123' });
+        } else if (userName === 'yogesh') {
+            setSignInData({ ...signInData, email: 'yogesh@gmail.com', password: 'yogesh@123' });
         }
     }
     return (
@@ -69,14 +69,24 @@ export default function Login() {
                 <div className="loginLeft">
                     <h3 className="loginLogo">Chat Now</h3>
                     <span className="loginDesc">Connect with freinds and the world around you on Chat Now.</span>
+                    <span className="m-2">1) Login with RAHUL & With Yogesh</span>
                 </div>
                 <div className="loginRight">
                     <div className="loginBox">
-                        <input type="text" placeholder="email" name="email" className="loginInput" onChange={(e) => handleSignInChange(e)} />
+                        <input type="text" placeholder="email" name="email" className="loginInput" value={signInData?.email} onChange={(e) => handleSignInChange(e)} />
                         <span className="validationMessage">{signInDataError.email}</span>
 
-                        <input type="password" placeholder="password" name="password" className="loginInput" onChange={(e) => handleSignInChange(e)} />
+                        <input type="password" placeholder="password" name="password" className="loginInput" value={signInData?.password} onChange={(e) => handleSignInChange(e)} />
                         <span className="validationMessage">{signInDataError.password}</span>
+
+                        <div className="row">
+                            <span>
+                                <input type="radio" name="creds" onClick={() => fillcreds('rahul')} /> Rahul Creds
+                            </span>
+                            <span className="ml-auto">
+                                <input type="radio" name="creds" onClick={() => fillcreds('yogesh')} /> Yogesh Creds
+                            </span>
+                        </div>
 
                         <button className="loginButton" type="submit" onClick={handleSignIn} disabled={loading.signIn}>{loading.signIn ? 'Please wait...' : 'Login'}</button>
                         <Link to="/register" className="loginRegisterButton">Create a new account</Link>
